@@ -44,7 +44,6 @@ import android.util.Log;
 public final class AccelerometerManager {
 
     private static final String TAG = AccelerometerManager.class.getSimpleName();
-    private static final long SENSOR_EVENT_MIN_DELAY_MS = 1000L;
 
     private final SensorManager mSensorMgr;
     private final Sensor mSensor;
@@ -101,7 +100,6 @@ public final class AccelerometerManager {
 
         mAccelerometerListener = new AccelerometerListener(
                 new AccelerometerHandler(new Handler(mSensorHandlerCallback)),
-                SENSOR_EVENT_MIN_DELAY_MS,
                 boostLimit);
 
         mSensorMgr.registerListener(mAccelerometerListener, mSensor,

@@ -34,8 +34,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -47,40 +48,47 @@ import org.leveafan941.boostdetection.accelerometer.AccelerometerManager;
  */
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     private static final String GLOBAL_SHARED_PREFS_NAME = "BOOST_MAIN_PREFS";
     private static final String BOOST_PREF_NAME = "boost_preference";
 
+    private static final String BOOST_INPUT_BUNDLE_NAME = "boost_input_bundle_name";
+    private static final String BOOST_INPUT_CURSOR_POSITION = "boost_input_bundle_cursor_pos";
+
     private static final int DEFAULT_BOOST_VALUE = 1;
+    private static final int MINIMUM_BOOST_VALUE = DEFAULT_BOOST_VALUE;
+
+    private static final int INVALID_BOOST_VALUE = -1;
+    private static final int INVALID_BOOST_INPUT_CURSOR_POS = -1;
 
     private EditText mBoostInputEdit;
 
     private AccelerometerManager mAccelManager;
 
-    private class BoostInputTextWatcher implements TextWatcher {
+    private class BoostLimitChangeListener implements View.OnKeyListener {
 
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            // This method is not used.
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (s.length() == 0) {
-                return;
+        public boolean onKey(View v, int keyCode, KeyEvent event) {
+            if (event.getAction() != KeyEvent.ACTION_DOWN || keyCode != KeyEvent.KEYCODE_ENTER) {
+                return false;
             }
 
             try {
-                final int limit = Integer.parseInt(s.toString());
-                mAccelManager.setBoostLimit(
-                        limit > DEFAULT_BOOST_VALUE ? limit : DEFAULT_BOOST_VALUE);
+                int limit = getBoostLimit();
+                if (limit < MINIMUM_BOOST_VALUE) {
+                    limit = MINIMUM_BOOST_VALUE;
+                }
+
+                mAccelManager.setBoostLimit(limit);
+                saveBoostInPreferences(limit);
+                return true;
+
             } catch (NumberFormatException e) {
                 Toast.makeText(MainActivity.this, "Invalid value", Toast.LENGTH_SHORT).show();
             }
-        }
 
-        @Override
-        public void afterTextChanged(Editable s) {
-            // This method is not used.
+            return false;
         }
     }
 
@@ -92,7 +100,10 @@ public class MainActivity extends AppCompatActivity {
         mAccelManager = new AccelerometerManager(this);
 
         mBoostInputEdit = (EditText) findViewById(R.id.boost_input);
-        mBoostInputEdit.addTextChangedListener(new BoostInputTextWatcher());
+        mBoostInputEdit.setOnKeyListener(new BoostLimitChangeListener());
+
+        restoreBoostFromPreferences();
+        setBoostInputCursorPosition(mBoostInputEdit.getText().length());
     }
 
     @Override
@@ -106,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Acceleration limit exceed: " + value,
                         Toast.LENGTH_SHORT).show();
             }
-        }, getAccelerationLimit());
+        }, getBoostLimit());
     }
 
     @Override
@@ -117,21 +128,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
 
-        restoreBoostFromPreferences();
+        Log.d(TAG, "onSaveInstanceState");
+
+        outState.putInt(BOOST_INPUT_BUNDLE_NAME, getBoostLimit());
+        outState.putInt(BOOST_INPUT_CURSOR_POSITION, getBoostInputCursorPosition());
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
 
-        saveBoostInPreferences(getAccelerationLimit());
+        final int boostLimit = savedInstanceState.getInt(BOOST_INPUT_BUNDLE_NAME,
+                INVALID_BOOST_VALUE);
+        if (boostLimit > MINIMUM_BOOST_VALUE) {
+            mBoostInputEdit.setText(String.valueOf(boostLimit));
+        }
+
+        final int cursorPos = savedInstanceState.getInt(BOOST_INPUT_CURSOR_POSITION,
+                INVALID_BOOST_INPUT_CURSOR_POS);
+        if (cursorPos != INVALID_BOOST_INPUT_CURSOR_POS) {
+            setBoostInputCursorPosition(cursorPos);
+        }
+
+        Log.d(TAG, "onRestoreInstanceState: " + "Boost limit = " + boostLimit
+                + ", Cursor pos = " + cursorPos);
     }
 
-    private int getAccelerationLimit() {
+    private int getBoostLimit() {
         return Integer.parseInt(mBoostInputEdit.getText().toString());
+    }
+
+    private int getBoostInputCursorPosition() {
+        return mBoostInputEdit.getSelectionEnd();
+    }
+
+    private void setBoostInputCursorPosition(int position) {
+        mBoostInputEdit.setSelection(position);
     }
 
     private void saveBoostInPreferences(int boostValue) {

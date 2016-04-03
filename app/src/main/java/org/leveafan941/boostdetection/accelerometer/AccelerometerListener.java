@@ -34,6 +34,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.os.SystemClock;
+import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,45 +43,38 @@ import java.util.concurrent.TimeUnit;
  */
 class AccelerometerListener implements SensorEventListener {
 
-//    private static final String TAG = AccelerometerListener.class.getSimpleName();
+    private static final String TAG = AccelerometerListener.class.getSimpleName();
 
     private volatile float mBoostLimit;
-    private final long mMinDelayMillis;
-    private long mLastEventTimestamp;
+    private boolean mIsLimitExceed = false;
     private final AccelerometerHandler mAccelHandler;
 
-    AccelerometerListener(AccelerometerHandler handler, long minDelayMillis, float boostLimit) {
+    AccelerometerListener(AccelerometerHandler handler, float boostLimit) {
         mBoostLimit = boostLimit;
-        mMinDelayMillis = minDelayMillis;
         mAccelHandler = handler;
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() != Sensor.TYPE_LINEAR_ACCELERATION ||
-                isSpamSensorEvent(event.timestamp)) {
+        if (event.sensor.getType() != Sensor.TYPE_LINEAR_ACCELERATION) {
             return;
         }
 
-        mLastEventTimestamp = TimeUnit.NANOSECONDS.toMillis(event.timestamp);
         final float boostModule = calcDeviceBoost(event.values[0], event.values[1],
                 event.values[2]);
+//        Log.d(TAG, "Boost module = " + boostModule);
         if (boostModule > mBoostLimit) {
-            mAccelHandler.queueBoostLimitExceed(boostModule);
+            if (!mIsLimitExceed) {
+                mAccelHandler.queueBoostLimitExceed(boostModule);
+                mIsLimitExceed = true;
+            }
+        } else {
+            mIsLimitExceed = false;
         }
     }
 
     void setBoostLimit(float boostLimit) {
         mBoostLimit = boostLimit;
-    }
-
-    private boolean isSpamSensorEvent(long eventTimestamp) {
-        if (mLastEventTimestamp == 0L) {
-            mLastEventTimestamp = SystemClock.elapsedRealtime();
-        }
-
-        return TimeUnit.NANOSECONDS.toMillis(eventTimestamp) - mLastEventTimestamp
-                < mMinDelayMillis;
     }
 
     private static float calcDeviceBoost(float xBoost, float yBoost, float zBoost) {
