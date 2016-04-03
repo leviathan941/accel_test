@@ -43,7 +43,7 @@ import android.widget.Toast;
 
 import org.leveafan941.boostdetection.R;
 import org.leveafan941.boostdetection.accelerometer.AccelerometerManager;
-import org.leveafan941.boostdetection.notification.AccelNotifManager;
+import org.leveafan941.boostdetection.notification.AccelNotifFacade;
 
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mBoostInputEdit;
 
     private AccelerometerManager mAccelManager;
-    private AccelNotifManager mNotifMgr;
+    private AccelNotifFacade mNotifMgr;
 
     private class BoostLimitChangeListener implements View.OnKeyListener {
 
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
             mBoostInputEdit.setEnabled(false);
         }
 
-        mNotifMgr = new AccelNotifManager(this);
+        mNotifMgr = new AccelNotifFacade(this);
 
         mBoostInputEdit = (EditText) findViewById(R.id.boost_input);
         mBoostInputEdit.setOnKeyListener(new BoostLimitChangeListener());
@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
 
                     mNotifMgr.showBoostLimitExceedNotification(++mLimitExceedNumber);
+                    mNotifMgr.playBoostLimitExceedAudioNotification();
                 }
             }, getBoostLimit());
         }

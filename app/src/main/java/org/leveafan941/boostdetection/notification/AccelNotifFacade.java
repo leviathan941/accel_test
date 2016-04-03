@@ -35,6 +35,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -44,9 +47,9 @@ import org.leveafan941.boostdetection.gui.MainActivity;
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-public class AccelNotifManager {
+public class AccelNotifFacade {
 
-    private static final String TAG = AccelNotifManager.class.getSimpleName();
+    private static final String TAG = AccelNotifFacade.class.getSimpleName();
 
     private static final int BOOST_LIMIT_EXCEED_NOTIF_ID = 143;
     private static final String EXCEED_NOTIF_CLICK_ACTION =
@@ -56,8 +59,9 @@ public class AccelNotifManager {
 
     private final Context mContext;
     private final NotificationManager mNotificationMgr;
+    private Ringtone mBoostLimitexceedRingtone;
 
-    public AccelNotifManager(Context context) {
+    public AccelNotifFacade(Context context) {
         mContext = context;
 
         mNotificationMgr = (NotificationManager)
@@ -102,5 +106,18 @@ public class AccelNotifManager {
                 0,
                 notifyIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public void playBoostLimitExceedAudioNotification() {
+        if (mBoostLimitexceedRingtone == null) {
+            final Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            mBoostLimitexceedRingtone = RingtoneManager.getRingtone(mContext, notification);
+        }
+
+        mBoostLimitexceedRingtone.play();
+    }
+
+    public void stopBoostLimitExceedAudioNotification() {
+        mBoostLimitexceedRingtone.stop();
     }
 }
