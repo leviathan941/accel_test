@@ -97,7 +97,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mAccelManager = new AccelerometerManager(this);
+        try {
+            mAccelManager = new AccelerometerManager(this);
+        } catch (AccelerometerManager.NoAccelerometerHardwareException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            mBoostInputEdit.setEnabled(false);
+        }
 
         mBoostInputEdit = (EditText) findViewById(R.id.boost_input);
         mBoostInputEdit.setOnKeyListener(new BoostLimitChangeListener());
@@ -110,21 +115,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        mAccelManager.start(new AccelerometerManager.BoostLimitListener() {
+        if (mAccelManager != null) {
+            mAccelManager.start(new AccelerometerManager.BoostLimitListener() {
 
-            @Override
-            public void onBoostLimitExceed(float value) {
-                Toast.makeText(MainActivity.this, "Acceleration limit exceed: " + value,
-                        Toast.LENGTH_SHORT).show();
-            }
-        }, getBoostLimit());
+                @Override
+                public void onBoostLimitExceed(float value) {
+                    Toast.makeText(MainActivity.this, "Acceleration limit exceed: " + value,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }, getBoostLimit());
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        mAccelManager.stop();
+        if (mAccelManager != null) {
+            mAccelManager.stop();
+        }
     }
 
     @Override
