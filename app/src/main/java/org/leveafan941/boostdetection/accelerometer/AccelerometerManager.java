@@ -38,6 +38,8 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 
+import org.leveafan941.boostdetection.R;
+
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
  */
@@ -82,7 +84,7 @@ public final class AccelerometerManager {
         mSensor = mSensorMgr.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         if (mSensor == null) {
             throw new NoAccelerometerHardwareException(
-                    "There is no accelerometer sensor in device.");
+                    context.getString(R.string.no_accelerometer_exception));
         }
         Log.d(TAG, "Sensor name = " + mSensor.getName());
         Log.d(TAG, "Resolution = " + mSensor.getResolution() + ", max range = "

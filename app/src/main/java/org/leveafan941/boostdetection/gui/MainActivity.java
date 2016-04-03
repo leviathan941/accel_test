@@ -31,6 +31,7 @@
 package org.leveafan941.boostdetection.gui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -42,6 +43,7 @@ import android.widget.Toast;
 
 import org.leveafan941.boostdetection.R;
 import org.leveafan941.boostdetection.accelerometer.AccelerometerManager;
+import org.leveafan941.boostdetection.notification.AccelNotifManager;
 
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mBoostInputEdit;
 
     private AccelerometerManager mAccelManager;
+    private AccelNotifManager mNotifMgr;
 
     private class BoostLimitChangeListener implements View.OnKeyListener {
 
@@ -85,7 +88,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             } catch (NumberFormatException e) {
-                Toast.makeText(MainActivity.this, "Invalid value", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, getString(R.string.boost_input_invalid_value),
+                        Toast.LENGTH_SHORT).show();
             }
 
             return false;
@@ -104,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
             mBoostInputEdit.setEnabled(false);
         }
 
+        mNotifMgr = new AccelNotifManager(this);
+
         mBoostInputEdit = (EditText) findViewById(R.id.boost_input);
         mBoostInputEdit.setOnKeyListener(new BoostLimitChangeListener());
 
@@ -118,10 +124,15 @@ public class MainActivity extends AppCompatActivity {
         if (mAccelManager != null) {
             mAccelManager.start(new AccelerometerManager.BoostLimitListener() {
 
+                private int mLimitExceedNumber = 0;
+
                 @Override
                 public void onBoostLimitExceed(float value) {
-                    Toast.makeText(MainActivity.this, "Acceleration limit exceed: " + value,
+                    Toast.makeText(MainActivity.this,
+                            getString(R.string.boost_limit_exceed_message, value),
                             Toast.LENGTH_SHORT).show();
+
+                    mNotifMgr.showBoostLimitExceedNotification(++mLimitExceedNumber);
                 }
             }, getBoostLimit());
         }
@@ -134,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
         if (mAccelManager != null) {
             mAccelManager.stop();
         }
+
+//        mNotifMgr.hideBoostLimitExceedNotification();
     }
 
     @Override
@@ -164,6 +177,13 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onRestoreInstanceState: " + "Boost limit = " + boostLimit
                 + ", Cursor pos = " + cursorPos);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        Toast.makeText(this, intent.getAction(), Toast.LENGTH_LONG).show();
     }
 
     private int getBoostLimit() {

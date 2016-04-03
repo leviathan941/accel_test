@@ -3,4 +3,10 @@
     <string name="welcome_text">This is boost detection application</string>
     <string name="boost_input_label">Enter acceleration limit:</string>
     <string name="boost_input_units">m/s2</string>
+
+    <string name="boost_input_invalid_value">Invalid value</string>
+    <string name="no_accelerometer_exception">There is no accelerometer sensor in device</string>
+    <string name="boost_limit_exceed_message">Acceleration limit exceed: %1$.4f</string>
+
+    <string name="exceed_notification_content_title">Boost limit exceed number:</string>
 </resources>
