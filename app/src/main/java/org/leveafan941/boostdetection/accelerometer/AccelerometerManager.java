@@ -65,7 +65,7 @@ public final class AccelerometerManager {
         }
     }
 
-    class BoostLimitHandlerCallback implements Handler.Callback {
+    private class BoostLimitHandlerCallback implements Handler.Callback {
 
         @Override
         public boolean handleMessage(Message msg) {
@@ -77,6 +77,23 @@ public final class AccelerometerManager {
             return false;
         }
     }
+
+    private static class AccelerometerHandler implements AccelerometerEventQueue {
+
+        static final int BOOST_LIMIT_MSG_ID = 1;
+
+        private final Handler mHandler;
+
+        AccelerometerHandler(Handler handler) {
+            mHandler = handler;
+        }
+
+        @Override
+        public void queueBoostLimitExceed(float boostValue) {
+            Message.obtain(mHandler, BOOST_LIMIT_MSG_ID, boostValue).sendToTarget();
+        }
+    }
+
 
     public AccelerometerManager(Context context) {
         mSensorMgr = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);

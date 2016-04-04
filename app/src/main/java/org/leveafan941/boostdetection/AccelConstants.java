@@ -28,12 +28,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.leveafan941.boostdetection.accelerometer;
+package org.leveafan941.boostdetection;
 
 /**
- * @author Alexey Kuzin (amkuzink@gmail.com)
+ * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-interface AccelerometerEventQueue {
+public final class AccelConstants {
 
-    void queueBoostLimitExceed(float boostValue);
+    public static final int DEFAULT_BOOST_VALUE = 1;
+    public static final int MINIMUM_BOOST_VALUE = DEFAULT_BOOST_VALUE;
+
+    public static final int INVALID_BOOST_VALUE = -1;
+
+    private AccelConstants() { }
 }

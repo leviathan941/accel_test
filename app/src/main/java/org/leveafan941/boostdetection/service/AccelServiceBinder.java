@@ -28,12 +28,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.leveafan941.boostdetection.accelerometer;
+package org.leveafan941.boostdetection.service;
 
 /**
- * @author Alexey Kuzin (amkuzink@gmail.com)
+ * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-interface AccelerometerEventQueue {
-
-    void queueBoostLimitExceed(float boostValue);
+public interface AccelServiceBinder {
+    void setBoostLimit(float boostLimit);
 }

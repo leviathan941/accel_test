@@ -30,9 +30,11 @@
 
 package org.leveafan941.boostdetection.gui;
 
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,14 +43,15 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.leveafan941.boostdetection.AccelConstants;
 import org.leveafan941.boostdetection.R;
-import org.leveafan941.boostdetection.accelerometer.AccelerometerManager;
-import org.leveafan941.boostdetection.notification.AccelNotifFacade;
+import org.leveafan941.boostdetection.service.AccelServiceBinder;
+import org.leveafan941.boostdetection.service.AccelServiceIntents;
 
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ServiceConnection {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -58,16 +61,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String BOOST_INPUT_BUNDLE_NAME = "boost_input_bundle_name";
     private static final String BOOST_INPUT_CURSOR_POSITION = "boost_input_bundle_cursor_pos";
 
-    private static final int DEFAULT_BOOST_VALUE = 1;
-    private static final int MINIMUM_BOOST_VALUE = DEFAULT_BOOST_VALUE;
-
-    private static final int INVALID_BOOST_VALUE = -1;
     private static final int INVALID_BOOST_INPUT_CURSOR_POS = -1;
 
     private EditText mBoostInputEdit;
+    private AccelServiceBinder mAccelerometerBinder;
 
-    private AccelerometerManager mAccelManager;
-    private AccelNotifFacade mNotifMgr;
 
     private class BoostLimitChangeListener implements View.OnKeyListener {
 
@@ -79,11 +77,20 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 int limit = getBoostLimit();
-                if (limit < MINIMUM_BOOST_VALUE) {
-                    limit = MINIMUM_BOOST_VALUE;
+                if (limit < AccelConstants.MINIMUM_BOOST_VALUE) {
+                    Toast.makeText(MainActivity.this, getString(
+                            R.string.boost_input_invalid_value_default_used,
+                            limit,
+                            AccelConstants.MINIMUM_BOOST_VALUE),
+                            Toast.LENGTH_LONG).show();
+
+                    limit = AccelConstants.MINIMUM_BOOST_VALUE;
                 }
 
-                mAccelManager.setBoostLimit(limit);
+                if (mAccelerometerBinder != null) {
+                    mAccelerometerBinder.setBoostLimit(limit);
+                }
+
                 saveBoostInPreferences(limit);
                 return true;
 
@@ -101,53 +108,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        try {
-            mAccelManager = new AccelerometerManager(this);
-        } catch (AccelerometerManager.NoAccelerometerHardwareException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            mBoostInputEdit.setEnabled(false);
-        }
-
-        mNotifMgr = new AccelNotifFacade(this);
-
         mBoostInputEdit = (EditText) findViewById(R.id.boost_input);
         mBoostInputEdit.setOnKeyListener(new BoostLimitChangeListener());
 
         restoreBoostFromPreferences();
         setBoostInputCursorPosition(mBoostInputEdit.getText().length());
+
+        AccelServiceIntents.startAccelerometerService(this, getBoostLimit());
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
 
-        if (mAccelManager != null) {
-            mAccelManager.start(new AccelerometerManager.BoostLimitListener() {
-
-                private int mLimitExceedNumber = 0;
-
-                @Override
-                public void onBoostLimitExceed(float value) {
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.boost_limit_exceed_message, value),
-                            Toast.LENGTH_SHORT).show();
-
-                    mNotifMgr.showBoostLimitExceedNotification(++mLimitExceedNumber);
-                    mNotifMgr.playBoostLimitExceedAudioNotification();
-                }
-            }, getBoostLimit());
-        }
+        bindService(AccelServiceIntents.getAccelerometerServiceBindIntent(this), this,
+                BIND_AUTO_CREATE);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
 
-        if (mAccelManager != null) {
-            mAccelManager.stop();
-        }
-
-//        mNotifMgr.hideBoostLimitExceedNotification();
+        unbindService(this);
     }
 
     @Override
@@ -165,8 +147,8 @@ public class MainActivity extends AppCompatActivity {
         super.onRestoreInstanceState(savedInstanceState);
 
         final int boostLimit = savedInstanceState.getInt(BOOST_INPUT_BUNDLE_NAME,
-                INVALID_BOOST_VALUE);
-        if (boostLimit > MINIMUM_BOOST_VALUE) {
+                AccelConstants.INVALID_BOOST_VALUE);
+        if (boostLimit > AccelConstants.MINIMUM_BOOST_VALUE) {
             mBoostInputEdit.setText(String.valueOf(boostLimit));
         }
 
@@ -181,10 +163,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        if (service != null) {
+            mAccelerometerBinder = (AccelServiceBinder) service;
+        }
+    }
 
-        Toast.makeText(this, intent.getAction(), Toast.LENGTH_LONG).show();
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        mAccelerometerBinder = null;
     }
 
     private int getBoostLimit() {
@@ -199,16 +186,16 @@ public class MainActivity extends AppCompatActivity {
         mBoostInputEdit.setSelection(position);
     }
 
+    private void restoreBoostFromPreferences() {
+        mBoostInputEdit.setText(String.valueOf(getGlobalSharedPrefs().getInt(BOOST_PREF_NAME,
+                        AccelConstants.DEFAULT_BOOST_VALUE)));
+    }
+
     private void saveBoostInPreferences(int boostValue) {
         getGlobalSharedPrefs()
                 .edit()
                 .putInt(BOOST_PREF_NAME, boostValue)
                 .apply();
-    }
-
-    private void restoreBoostFromPreferences() {
-        mBoostInputEdit.setText(String.valueOf(
-                getGlobalSharedPrefs().getInt(BOOST_PREF_NAME, DEFAULT_BOOST_VALUE)));
     }
 
     private SharedPreferences getGlobalSharedPrefs() {

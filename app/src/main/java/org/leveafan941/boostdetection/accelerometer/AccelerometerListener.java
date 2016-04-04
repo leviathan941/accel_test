@@ -33,25 +33,21 @@ package org.leveafan941.boostdetection.accelerometer;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.os.SystemClock;
-import android.util.Log;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
  */
 class AccelerometerListener implements SensorEventListener {
 
-    private static final String TAG = AccelerometerListener.class.getSimpleName();
+//    private static final String TAG = AccelerometerListener.class.getSimpleName();
 
     private volatile float mBoostLimit;
     private boolean mIsLimitExceed = false;
-    private final AccelerometerHandler mAccelHandler;
+    private final AccelerometerEventQueue mEventQueue;
 
-    AccelerometerListener(AccelerometerHandler handler, float boostLimit) {
+    AccelerometerListener(AccelerometerEventQueue handler, float boostLimit) {
         mBoostLimit = boostLimit;
-        mAccelHandler = handler;
+        mEventQueue = handler;
     }
 
     @Override
@@ -65,7 +61,7 @@ class AccelerometerListener implements SensorEventListener {
 //        Log.d(TAG, "Boost module = " + boostModule);
         if (boostModule > mBoostLimit) {
             if (!mIsLimitExceed) {
-                mAccelHandler.queueBoostLimitExceed(boostModule);
+                mEventQueue.queueBoostLimitExceed(boostModule);
                 mIsLimitExceed = true;
             }
         } else {

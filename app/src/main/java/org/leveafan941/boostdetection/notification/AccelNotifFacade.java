@@ -43,6 +43,7 @@ import android.util.Log;
 
 import org.leveafan941.boostdetection.R;
 import org.leveafan941.boostdetection.gui.MainActivity;
+import org.leveafan941.boostdetection.service.AccelServiceIntents;
 
 /**
  * @author Alexey Kuzin (amkuzink@gmail.com).
@@ -52,10 +53,6 @@ public class AccelNotifFacade {
     private static final String TAG = AccelNotifFacade.class.getSimpleName();
 
     private static final int BOOST_LIMIT_EXCEED_NOTIF_ID = 143;
-    private static final String EXCEED_NOTIF_CLICK_ACTION =
-            "org.leveafan941.boostdetection.action.EXCEED_NOTIF_CLICKED";
-    private static final String EXCEED_NOTIF_REMOVE_ACTION =
-            "org.leveafan941.boostdetection.action.EXCEED_NOTIF_REMOVED";
 
     private final Context mContext;
     private final NotificationManager mNotificationMgr;
@@ -90,7 +87,7 @@ public class AccelNotifFacade {
 
     private PendingIntent createBoostLimitExceedContentIntent() {
         final Intent notifyIntent = new Intent(mContext, MainActivity.class);
-        notifyIntent.setAction(EXCEED_NOTIF_CLICK_ACTION);
+        notifyIntent.setAction(AccelfNotifications.EXCEED_NOTIF_CLICK_ACTION);
 
         return PendingIntent.getActivity(mContext,
                 0,
@@ -99,10 +96,11 @@ public class AccelNotifFacade {
     }
 
     private PendingIntent createBoostLimitExceedDeleteIntent() {
-        final Intent notifyIntent = new Intent(mContext, MainActivity.class);
-        notifyIntent.setAction(EXCEED_NOTIF_REMOVE_ACTION);
+        final Intent notifyIntent = AccelServiceIntents.getAccelerometerServiceBindIntent(
+                mContext);
+        notifyIntent.setAction(AccelfNotifications.EXCEED_NOTIF_REMOVE_ACTION);
 
-        return PendingIntent.getActivity(mContext,
+        return PendingIntent.getService(mContext,
                 0,
                 notifyIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
@@ -115,9 +113,5 @@ public class AccelNotifFacade {
         }
 
         mBoostLimitexceedRingtone.play();
-    }
-
-    public void stopBoostLimitExceedAudioNotification() {
-        mBoostLimitexceedRingtone.stop();
     }
 }

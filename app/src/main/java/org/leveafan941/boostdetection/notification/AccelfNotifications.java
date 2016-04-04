@@ -28,12 +28,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.leveafan941.boostdetection.accelerometer;
+package org.leveafan941.boostdetection.notification;
 
 /**
- * @author Alexey Kuzin (amkuzink@gmail.com)
+ * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-interface AccelerometerEventQueue {
+public final class AccelfNotifications {
 
-    void queueBoostLimitExceed(float boostValue);
+    public static final String EXCEED_NOTIF_CLICK_ACTION =
+            "org.leveafan941.boostdetection.action.EXCEED_NOTIF_CLICKED";
+    public static final String EXCEED_NOTIF_REMOVE_ACTION =
+            "org.leveafan941.boostdetection.action.EXCEED_NOTIF_REMOVED";
+
+    private AccelfNotifications() { }
 }

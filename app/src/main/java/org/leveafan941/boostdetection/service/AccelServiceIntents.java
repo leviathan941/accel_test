@@ -28,12 +28,32 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.leveafan941.boostdetection.accelerometer;
+package org.leveafan941.boostdetection.service;
+
+import android.content.Context;
+import android.content.Intent;
 
 /**
- * @author Alexey Kuzin (amkuzink@gmail.com)
+ * @author Alexey Kuzin (amkuzink@gmail.com).
  */
-interface AccelerometerEventQueue {
+public class AccelServiceIntents {
 
-    void queueBoostLimitExceed(float boostValue);
+    static final String START_ACCELEROMETER_SERVICE_ACTION =
+            "org.leviathan941.boostdetection.action.START_ACCEL_SERVICE";
+
+    static final String BOOST_LIMIT_EXTRA = "org.leviathan941.boostdetection.extra.BOOST_LIMIT";
+
+    public static void startAccelerometerService(Context context, float boostLimit) {
+        final Intent startIntent = new Intent(context, AccelerometerService.class);
+        startIntent.setAction(START_ACCELEROMETER_SERVICE_ACTION);
+        startIntent.putExtra(BOOST_LIMIT_EXTRA, boostLimit);
+
+        context.startService(startIntent);
+    }
+
+    public static Intent getAccelerometerServiceBindIntent(Context context) {
+        return new Intent(context, AccelerometerService.class);
+    }
+
+    private AccelServiceIntents() { }
 }

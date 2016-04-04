@@ -21,6 +21,9 @@
             </intent-filter>
 
         </activity>
+
+        <service android:name=".service.AccelerometerService"
+            android:exported="false"/>
     </application>
 
 </manifest>
