@@ -56,10 +56,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final String GLOBAL_SHARED_PREFS_NAME = "BOOST_MAIN_PREFS";
-    private static final String BOOST_PREF_NAME = "boost_preference";
+    private static final String BOOST_LIMIT_PREF_NAME = "boost_limit_preference";
 
-    private static final String BOOST_INPUT_BUNDLE_NAME = "boost_input_bundle_name";
-    private static final String BOOST_INPUT_CURSOR_POSITION = "boost_input_bundle_cursor_pos";
+    private static final String BOOST_INPUT_BUNDLE_LIMIT = "boost_input_bundle_limit";
+    private static final String BOOST_INPUT_BUNDLE_CURSOR_POSITION =
+            "boost_input_bundle_cursor_pos";
 
     private static final int INVALID_BOOST_INPUT_CURSOR_POS = -1;
 
@@ -138,21 +139,21 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
         Log.d(TAG, "onSaveInstanceState");
 
-        outState.putInt(BOOST_INPUT_BUNDLE_NAME, getBoostLimit());
-        outState.putInt(BOOST_INPUT_CURSOR_POSITION, getBoostInputCursorPosition());
+        outState.putInt(BOOST_INPUT_BUNDLE_LIMIT, getBoostLimit());
+        outState.putInt(BOOST_INPUT_BUNDLE_CURSOR_POSITION, getBoostInputCursorPosition());
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        final int boostLimit = savedInstanceState.getInt(BOOST_INPUT_BUNDLE_NAME,
+        final int boostLimit = savedInstanceState.getInt(BOOST_INPUT_BUNDLE_LIMIT,
                 AccelConstants.INVALID_BOOST_VALUE);
         if (boostLimit > AccelConstants.MINIMUM_BOOST_VALUE) {
             mBoostInputEdit.setText(String.valueOf(boostLimit));
         }
 
-        final int cursorPos = savedInstanceState.getInt(BOOST_INPUT_CURSOR_POSITION,
+        final int cursorPos = savedInstanceState.getInt(BOOST_INPUT_BUNDLE_CURSOR_POSITION,
                 INVALID_BOOST_INPUT_CURSOR_POS);
         if (cursorPos != INVALID_BOOST_INPUT_CURSOR_POS) {
             setBoostInputCursorPosition(cursorPos);
@@ -187,14 +188,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     private void restoreBoostFromPreferences() {
-        mBoostInputEdit.setText(String.valueOf(getGlobalSharedPrefs().getInt(BOOST_PREF_NAME,
+        mBoostInputEdit.setText(String.valueOf(getGlobalSharedPrefs().getInt(BOOST_LIMIT_PREF_NAME,
                         AccelConstants.DEFAULT_BOOST_VALUE)));
     }
 
     private void saveBoostInPreferences(int boostValue) {
         getGlobalSharedPrefs()
                 .edit()
-                .putInt(BOOST_PREF_NAME, boostValue)
+                .putInt(BOOST_LIMIT_PREF_NAME, boostValue)
                 .apply();
     }
 
